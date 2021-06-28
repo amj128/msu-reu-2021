@@ -128,7 +128,18 @@ endfor
 	plot_image,sqrt(max(rastor,dimension=1))
   cursor,x,y 
 
+
+print,xs
+print,ys
 ;stop
+fps=30
+ovid=idlffvideowrite('sumer_NeVIII_06071996_test.mp4')
+xsize=398
+ysize=2387
+vidstream=ovid.addvideostream(xsize,ysize,fps)
+image=tvrd(/true)
+;time=ovid.put(vidstream.image)
+ovid.cleanup
 
 peak_intensity = max(rastor,dimension=1)
 peak_intensity = TRANSPOSE(peak_intensity)
@@ -138,6 +149,20 @@ plot_image,sqrt(max(rastor,dimension=1)),title='Full Disk Peak Intensity in Ne V
 write_png,'fullsun_NeVIII_06071996.png',tvrd(/true)
 
 
+
+
+
+;loadct,0, /silent
+
+;for i =0, xs-1 do begin
+;  for j = 0 ny-1 do begin
+;      plot_image,transpose(sqrt(max(rastor,dimension=1))),title='Full Disk Peak Intensity in C IV (February 4, 1996)'
+;      image=tvrd(/true)
+;      time=ovid.put(vidstream,image)
+;    endif
+;    xs+=1
+;  endif
+;endfor
 ;fullsun_NeVIII_06071996 = drive('fsc_NeVIII_06071996.png')
 ;write_png, 'fsc_NeVIII_06071996.png', TVRD(/TRUE)
 ;image2 = read_png(fsc_NeVIII_06071996)
