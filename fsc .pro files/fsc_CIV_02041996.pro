@@ -19,7 +19,7 @@
 
 ; MODIFICATION HISTORY:
 ;  Written by: Suman Panda 14 Jun 2021 
-;  Last Modified: Alyssa Johnson 21 Jun 2021 
+;  Last Modified: Alyssa Johnson 27 Jun 2021 
 ; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -40,8 +40,17 @@ strip_no=1
 drive='/disk/data/ajohnson/CIV_NeVIII_fitsfiles/1996/02/'
 fits_files=file_search(drive,'*.fits',count=count)
 
+fps=3
+ovid=idlffvideowrite('fullsun_CIV_02041996.mp4')
+window,xs=800,ys=800
+image=tvrd(/true)
+s=size(image)
+xsize=s[2]
+ysize=s[3]
+vidstream=ovid.addvideostream(xsize,ysize,fps)
+
+
 for i= 0, count-1 do begin
-  ;print,i=
 	data= readfits(fits_files(i),Header,/silent)
 	
 	dimention=size(data)
@@ -50,74 +59,47 @@ for i= 0, count-1 do begin
 		CRVAL2_str=Header(68) ;finds the CRVAL2 or -944.594 / Value at reference pixel of axis 2
 		substr1=strsplit(crval2_str,' ',/extract)
 		CRVAL2=FLOAT(substr1(2)) ;turns value at reference pixel into integer
-    ;printCRVAL2
     
 		CRVAL3_str=Header(73) ;finds the CRVAL3 or -630.422 / Value at reference pixel of axis 3
 		substr2=strsplit(crval3_str,' ',/extract)
-		CRVAL3=FLOAT(substr2(2)) ;turns value at reference pixel into integer
-		;printCRVAL3	
+		CRVAL3=FLOAT(substr2(2)) ;turns value at reference pixel into integer	
       
 		xss=ROUND((CRVAL3+1500)) ;creates size of array, since rastor is 3000 takes half that and adds on
-		yss=ROUND(CRVAL2+1500-180.5)
+		yss=ROUND(CRVAL2+1500-180.5) ;solar y
    
-		if abs(ys0-yss) ge 250 then begin
+		if abs(ys0-yss) ge 250 then begin ;whenever goes over 250..makes image
 			ys=yss
 			xs=xss;-abs(xs0-xs)		
 			strip_no=strip_no+1
-			window,xs=1000,ys=1000
-			;plot_image,sqrt(congrid(max(rastor,dimension=1),1000,1000));don't need to use congrid, congrid which changes image by specified dimension
-			;plot_image,sqrt(max(rastor,dimension=1)), title='Full Disk Peak Intensity in C IV (February 4, 1996)'
+			window,xs=800,ys=800
+	    plot_image,sqrt(max(rastor,dimension=1))
+      ;transpose(image)
+      image2=tvrd(/true) ;grabs window currently displayed, if you put before window nothing would be grabbed
+      time=ovid.put(vidstream,image2) ;error was from vidstream and image NOT being the same size
       ;cursor,x,y ;returns position of cursor	
 		endif				
 		 
-    ;print,'xs=',xs
-    ;print,ys 	
-		;print,xs,xss,xs0,ys,yss
-    ;print, xs[300:400]
-		;print,CRVAL3+1500.,xs,ys	
-		
     rastor[0:49,yss:yss+299,xss]=data[0:49,60:359]
-		ys0=yss
+		ys0=yss ;way to check each solar y value with previous one
 
 		if xs ne xss then rastor[0:49,yss:yss+299,xs]=data[0:49,60:359]
 
 		if (strip_no MOD 2) eq 1 then xs=xss-1 else xs=xss+1
 	endif else begin
-		printf,lun,fits_files(i)
+		;printf,lun,fits_files(i)
 	endelse
-	
+
+endfor ;endfor is only for where you want the for loop to end
+
 peak_intensity = max(rastor,dimension=1)
 peak_intensity = TRANSPOSE(peak_intensity)
-window,xs=500,ys=500
+window,xs=800,ys=800
 
 plot_image,transpose(sqrt(max(rastor,dimension=1))),title='Full Disk Peak Intensity in C IV (February 4, 1996)'
 write_png,'fullsun_CIV_02041996.png',tvrd(/true)
 
+ovid.cleanup ;if you don't do it won't write into movie, okay for end
 
-fps=3000
-ovid=idlffvideowrite('sumer_CIV_test.mp4')
-xsize=xs
-ysize=ys
-vidstream=ovid.addvideostream(xsize,ysize,fps)
-image=tvrd(/true)
-;time=ovid.put(vidstream.image)
-
-;loadct,0, /silent
-
-;for i =0, xs-1 do begin
-;  for j = 0 ny-1 do begin
-;      plot_image,transpose(sqrt(max(rastor,dimension=1))),title='Full Disk Peak Intensity in C IV (February 4, 1996)'
-;      image=tvrd(/true)
-;      time=ovid.put(vidstream,image)
-;    endif
-;    xs+=1
-;  endif
-;endfor
-ovid.cleanup
-
-
-
-end
 end
 ;;;;;;;;;;;;;;;;;;
 ;CODE NOTES:
